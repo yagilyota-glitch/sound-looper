@@ -13,10 +13,7 @@
       --text-main: #f0f2f5;
       --text-sub: #9aa4b2;
       --record-color: #ef4444;
-      --record-active: #dc2626;
       --play-color: #10b981;
-      --play-active: #059669;
-      --stop-color: #64748b;
       --accent: #3b82f6;
     }
 
@@ -72,7 +69,6 @@
       margin: auto 0;
     }
 
-    /* アニメーション波紋リング */
     .ripple-ring {
       position: absolute;
       top: 0;
@@ -106,7 +102,6 @@
       }
     }
 
-    /* プログレス円弧（SVG） */
     .progress-svg {
       position: absolute;
       top: -10px;
@@ -133,7 +128,7 @@
       transition: stroke-dashoffset 0.1s linear;
     }
 
-    /* メインのアクションボタン */
+    /* メイン操作ボタン */
     .main-button {
       position: relative;
       width: 210px;
@@ -147,21 +142,20 @@
       align-items: center;
       justify-content: center;
       box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
-      transition: transform 0.15s ease, background-color 0.25s ease, box-shadow 0.25s ease;
-      z-index: 2;
+      transition: transform 0.1s ease, box-shadow 0.2s ease;
+      z-index: 10;
+      pointer-events: auto;
     }
 
     .main-button:active {
-      transform: scale(0.94);
+      transform: scale(0.93);
     }
 
-    /* ボタンスタイル：録音準備 */
     .btn-record-ready {
       background: linear-gradient(135deg, #ef4444, #b91c1c);
       color: #ffffff;
     }
 
-    /* ボタンスタイル：録音中 */
     .btn-recording {
       background: linear-gradient(135deg, #dc2626, #991b1b);
       color: #ffffff;
@@ -173,13 +167,11 @@
       to { box-shadow: 0 0 45px rgba(239, 68, 68, 0.85); }
     }
 
-    /* ボタンスタイル：再生準備 */
     .btn-play-ready {
       background: linear-gradient(135deg, #10b981, #047857);
       color: #ffffff;
     }
 
-    /* ボタンスタイル：再生中 */
     .btn-playing {
       background: linear-gradient(135deg, #059669, #065f46);
       color: #ffffff;
@@ -198,6 +190,7 @@
       align-items: center;
       justify-content: center;
       margin-bottom: 6px;
+      pointer-events: none;
     }
 
     .button-icon svg {
@@ -210,15 +203,16 @@
       font-size: 22px;
       font-weight: 700;
       letter-spacing: 0.05em;
+      pointer-events: none;
     }
 
     .button-sublabel {
       font-size: 12px;
       opacity: 0.85;
       margin-top: 4px;
+      pointer-events: none;
     }
 
-    /* 状態ガイドテキスト */
     .status-area {
       text-align: center;
       min-height: 50px;
@@ -240,7 +234,6 @@
       margin-top: 4px;
     }
 
-    /* 下部サブアクション */
     .footer-actions {
       display: flex;
       flex-direction: column;
@@ -276,7 +269,6 @@
       display: none;
     }
 
-    /* 音量バー */
     .volume-box {
       width: 100%;
       display: flex;
@@ -300,7 +292,6 @@
       height: 6px;
     }
 
-    /* 保護者向け注意書き */
     .notice-text {
       font-size: 11px;
       color: #71717a;
@@ -309,7 +300,6 @@
       margin-top: 2px;
     }
 
-    /* エラー通知モーダル */
     .modal {
       display: none;
       position: fixed;
@@ -371,7 +361,7 @@
   <div class="stage" id="stage">
     <div class="ripple-ring"></div>
 
-    <!-- 録音時間プログレスサークル（最大10秒） -->
+    <!-- 録音プログレスリング -->
     <svg class="progress-svg" viewBox="0 0 290 290">
       <circle class="progress-track" cx="145" cy="145" r="135"></circle>
       <circle class="progress-bar" id="progressBar" cx="145" cy="145" r="135"></circle>
@@ -411,7 +401,7 @@
 
     <!-- 注意事項（iPhoneマナーモード等） -->
     <div class="notice-text">
-      ※音が小さいときはスマホ本体の音量を上げてください。<br>iPhoneの消音モード（マナーモード）解除を推奨します。
+      ※音が鳴らない・小さいときはiPhoneの消音モード（マナーモード）をオフにし、音量を上げてください。
     </div>
   </div>
 
@@ -423,9 +413,6 @@
       <button class="modal-btn" id="modalClose">わかりました</button>
     </div>
   </div>
-
-  <!-- iOSオーディオセッション強制切り替え用の隠しaudio要素 -->
-  <audio id="dummyAudio" playsinline webkit-playsinline preload="auto" style="display:none;"></audio>
 
   <script>
     // 状態管理
@@ -454,7 +441,6 @@
     const progressBar = document.getElementById('progressBar');
     const reRecordButton = document.getElementById('reRecordButton');
     const volumeSlider = document.getElementById('volumeSlider');
-    const dummyAudio = document.getElementById('dummyAudio');
     const modal = document.getElementById('modal');
     const modalTitle = document.getElementById('modalTitle');
     const modalText = document.getElementById('modalText');
@@ -463,10 +449,6 @@
     const CIRCUMFERENCE = 2 * Math.PI * 135; // 848.23
     progressBar.style.strokeDasharray = CIRCUMFERENCE;
     progressBar.style.strokeDashoffset = CIRCUMFERENCE;
-
-    // 1秒の完全無音WAV（Base64）: iOSのAVAudioSessionをスピーカーモードへ引き戻す起爆剤
-    const SILENT_WAV_BASE64 = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-    dummyAudio.src = SILENT_WAV_BASE64;
 
     const ICONS = {
       record: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle></svg>',
@@ -490,31 +472,34 @@
       }
     }
 
-    // iOSオーディオセッションをメインスピーカーへ強制復帰させる
-    async function forceSpeakerAudioSession() {
+    // AudioContext の初期化（ユーザー操作の同期的コンテキストで即座にアンロック）
+    function initAudioContext() {
       try {
-        dummyAudio.currentTime = 0;
-        await dummyAudio.play();
-        dummyAudio.pause();
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!audioContext || audioContext.state === 'closed') {
+          audioContext = new AudioCtx();
+        }
+        if (audioContext.state === 'suspended') {
+          audioContext.resume();
+        }
+        if (!gainNode) {
+          gainNode = audioContext.createGain();
+          gainNode.gain.value = parseFloat(volumeSlider.value);
+          gainNode.connect(audioContext.destination);
+        }
       } catch (e) {
-        // 再生が拒否されても無視
+        console.warn('AudioContext初期化エラー:', e);
       }
     }
 
-    // AudioContext の生成と再初期化
-    function ensureAudioContext() {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!audioContext || audioContext.state === 'closed') {
-        audioContext = new AudioCtx();
-      }
-      if (audioContext.state === 'suspended') {
-        audioContext.resume();
-      }
-      if (!gainNode) {
-        gainNode = audioContext.createGain();
-        gainNode.gain.value = parseFloat(volumeSlider.value);
-        gainNode.connect(audioContext.destination);
-      }
+    // iOSの受話口モードをスピーカーモードへリセット（ノンブロッキング実行）
+    function resetToSpeakerModeAsync() {
+      try {
+        const audio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+        audio.play().then(() => {
+          audio.pause();
+        }).catch(() => {});
+      } catch (e) {}
     }
 
     volumeSlider.addEventListener('input', (e) => {
@@ -524,29 +509,25 @@
       }
     });
 
-    mainButton.addEventListener('click', async () => {
-      // ユーザー操作タップ時にオーディオセッションをアンロック
-      await forceSpeakerAudioSession();
-      ensureAudioContext();
+    // メインボタンタップ処理（同期的に即座に分岐、一切ブロッキングさせない）
+    mainButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      initAudioContext();
       requestWakeLock();
 
-      switch (appState) {
-        case 'IDLE':
-          await startRecording();
-          break;
-        case 'RECORDING':
-          stopRecording();
-          break;
-        case 'READY':
-          startLoopPlayback();
-          break;
-        case 'PLAYING':
-          stopLoopPlayback();
-          break;
+      if (appState === 'IDLE') {
+        startRecording();
+      } else if (appState === 'RECORDING') {
+        stopRecording();
+      } else if (appState === 'READY') {
+        startLoopPlayback();
+      } else if (appState === 'PLAYING') {
+        stopLoopPlayback();
       }
     });
 
-    reRecordButton.addEventListener('click', async () => {
+    reRecordButton.addEventListener('click', (e) => {
+      e.preventDefault();
       if (appState === 'PLAYING') {
         stopLoopPlayback();
       }
@@ -559,6 +540,9 @@
 
     // 録音開始
     async function startRecording() {
+      setUIState('RECORDING');
+      statusText.textContent = 'マイクをつないでいます...';
+
       try {
         currentStream = await navigator.mediaDevices.getUserMedia({
           audio: {
@@ -570,7 +554,6 @@
 
         let mimeType = '';
         if (MediaRecorder.isTypeSupported('audio/mp4')) {
-          // iOS Safari は mp4 が最も安定
           mimeType = 'audio/mp4';
         } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
           mimeType = 'audio/webm;codecs=opus';
@@ -589,25 +572,21 @@
         };
 
         mediaRecorder.onstop = async () => {
-          // 1. マイクストリームを完全に停止してハードウェアを解放
+          // マイクを完全に停止・破棄
           if (currentStream) {
-            currentStream.getTracks().forEach(track => {
-              track.stop();
-            });
+            currentStream.getTracks().forEach(track => track.stop());
             currentStream = null;
           }
 
-          // 2. iOSの受話口（通話モード）からメインスピーカー（再生モード）へ即座に復帰
-          await forceSpeakerAudioSession();
+          // iOSの受話口モード解除を非同期でキック
+          resetToSpeakerModeAsync();
 
-          // 3. 音声データの処理
           const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'audio/mp4' });
           await processRecordedAudio(blob);
         };
 
         mediaRecorder.start(100);
         recordStartTime = Date.now();
-        setUIState('RECORDING');
         updateProgress();
 
       } catch (err) {
@@ -645,20 +624,20 @@
       }
     }
 
-    // 音声のデコード、音量自動最大化（ノーマライズ）、マイクロフェード
+    // 音声データのデコード
     async function processRecordedAudio(blob) {
       statusText.textContent = 'おとを じゅんび中...';
       statusDetail.textContent = 'すこしだけ まってね';
 
       try {
-        ensureAudioContext();
+        initAudioContext();
         const arrayBuffer = await blob.arrayBuffer();
         audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-        // 1. 自動音量最大化（ノーマライズ）: 録音した小さな音でもスピーカーからしっかり鳴らす
+        // 音量自動最大化（ノーマライズ）
         normalizeAudio(audioBuffer);
 
-        // 2. ループのクリックノイズ防止マイクロフェード（5ms）
+        // ループ境界のマイクロフェード（5ms）
         applyMicroFade(audioBuffer);
 
         setUIState('READY');
@@ -669,7 +648,7 @@
       }
     }
 
-    // ノーマライズ処理（ピーク値を検出し歪まない限界 0.95 まで音量を引き上げる）
+    // ノーマライズ処理
     function normalizeAudio(buffer) {
       let maxPeak = 0;
       for (let c = 0; c < buffer.numberOfChannels; c++) {
@@ -712,12 +691,11 @@
     }
 
     // ループ再生
-    async function startLoopPlayback() {
+    function startLoopPlayback() {
       if (!audioBuffer) return;
 
-      // iOSでスピーカー出力を再保証
-      await forceSpeakerAudioSession();
-      ensureAudioContext();
+      initAudioContext();
+      resetToSpeakerModeAsync();
 
       if (sourceNode) {
         try { sourceNode.stop(); sourceNode.disconnect(); } catch (e) {}
