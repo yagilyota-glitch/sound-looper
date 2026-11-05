@@ -4,17 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>おとループ</title>
   <style>
     :root {
-      --bg-color: #12141a;
-      --card-bg: #1c202a;
-      --text-main: #f0f2f5;
-      --text-sub: #9aa4b2;
+      --bg-color: #f7f9fc;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-sub: #64748b;
+      --border-color: #e2e8f0;
       --record-color: #ef4444;
-      --play-color: #10b981;
-      --accent: #3b82f6;
+      --record-gradient: linear-gradient(135deg, #f87171, #dc2626);
+      --play-color: #059669;
+      --play-gradient: linear-gradient(135deg, #34d399, #059669);
+      --accent: #2563eb;
     }
 
     * {
@@ -47,15 +50,17 @@
     }
 
     .title {
-      font-size: 24px;
-      font-weight: 700;
-      letter-spacing: 0.05em;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: #0f172a;
     }
 
     .subtitle {
       font-size: 13px;
       color: var(--text-sub);
       margin-top: 4px;
+      font-weight: 500;
     }
 
     /* メイン表示領域 */
@@ -94,7 +99,7 @@
     @keyframes ripplePulse {
       0% {
         transform: scale(0.85);
-        opacity: 0.85;
+        opacity: 0.8;
       }
       100% {
         transform: scale(1.35);
@@ -114,7 +119,7 @@
 
     .progress-track {
       fill: none;
-      stroke: rgba(255, 255, 255, 0.08);
+      stroke: #e2e8f0;
       stroke-width: 8;
     }
 
@@ -141,7 +146,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(15, 23, 42, 0.06);
       transition: transform 0.1s ease, box-shadow 0.2s ease;
       z-index: 10;
       pointer-events: auto;
@@ -152,35 +157,35 @@
     }
 
     .btn-record-ready {
-      background: linear-gradient(135deg, #ef4444, #b91c1c);
+      background: var(--record-gradient);
       color: #ffffff;
     }
 
     .btn-recording {
-      background: linear-gradient(135deg, #dc2626, #991b1b);
+      background: linear-gradient(135deg, #ef4444, #b91c1c);
       color: #ffffff;
-      animation: recordGlow 1s ease-in-out infinite alternate;
+      animation: recordGlow 1.2s ease-in-out infinite alternate;
     }
 
     @keyframes recordGlow {
-      from { box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
-      to { box-shadow: 0 0 45px rgba(239, 68, 68, 0.85); }
+      from { box-shadow: 0 8px 24px rgba(239, 68, 68, 0.35); }
+      to { box-shadow: 0 16px 48px rgba(239, 68, 68, 0.7); }
     }
 
     .btn-play-ready {
-      background: linear-gradient(135deg, #10b981, #047857);
+      background: var(--play-gradient);
       color: #ffffff;
     }
 
     .btn-playing {
-      background: linear-gradient(135deg, #059669, #065f46);
+      background: linear-gradient(135deg, #10b981, #047857);
       color: #ffffff;
       animation: playGlow 1.4s ease-in-out infinite alternate;
     }
 
     @keyframes playGlow {
-      from { box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
-      to { box-shadow: 0 0 45px rgba(16, 185, 129, 0.85); }
+      from { box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35); }
+      to { box-shadow: 0 16px 48px rgba(16, 185, 129, 0.7); }
     }
 
     .button-icon {
@@ -200,22 +205,23 @@
     }
 
     .button-label {
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: 0.05em;
+      font-size: 23px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
       pointer-events: none;
     }
 
     .button-sublabel {
       font-size: 12px;
-      opacity: 0.85;
+      opacity: 0.9;
       margin-top: 4px;
+      font-weight: 600;
       pointer-events: none;
     }
 
     .status-area {
       text-align: center;
-      min-height: 50px;
+      min-height: 52px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -223,8 +229,8 @@
     }
 
     .status-text {
-      font-size: 18px;
-      font-weight: 600;
+      font-size: 19px;
+      font-weight: 700;
       color: var(--text-main);
     }
 
@@ -244,24 +250,25 @@
     }
 
     .sub-button {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: #ffffff;
+      border: 1px solid var(--border-color);
       color: var(--text-main);
       padding: 12px 24px;
       border-radius: 9999px;
       font-size: 15px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
       width: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      transition: background-color 0.2s, transform 0.1s;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+      transition: background-color 0.15s, transform 0.1s, box-shadow 0.15s;
     }
 
     .sub-button:active {
-      background: rgba(255, 255, 255, 0.16);
+      background: #f1f5f9;
       transform: scale(0.97);
     }
 
@@ -274,13 +281,16 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      background: rgba(255, 255, 255, 0.04);
+      background: #ffffff;
+      border: 1px solid var(--border-color);
       padding: 10px 16px;
       border-radius: 14px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
     }
 
     .volume-label {
       font-size: 13px;
+      font-weight: 600;
       color: var(--text-sub);
       white-space: nowrap;
     }
@@ -294,7 +304,7 @@
 
     .notice-text {
       font-size: 11px;
-      color: #71717a;
+      color: #94a3b8;
       text-align: center;
       line-height: 1.4;
       margin-top: 2px;
@@ -304,7 +314,8 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.85);
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
       z-index: 100;
       align-items: center;
       justify-content: center;
@@ -316,35 +327,37 @@
     }
 
     .modal-box {
-      background: var(--card-bg);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 18px;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
       padding: 24px;
       max-width: 320px;
       text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
     }
 
     .modal-title {
-      font-size: 17px;
+      font-size: 18px;
       font-weight: 700;
       margin-bottom: 10px;
+      color: var(--text-main);
     }
 
     .modal-text {
       font-size: 14px;
       color: var(--text-sub);
       line-height: 1.5;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
     }
 
     .modal-btn {
       background: var(--accent);
-      color: #fff;
+      color: #ffffff;
       border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
+      padding: 12px 20px;
+      border-radius: 10px;
       font-size: 15px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
       width: 100%;
     }
@@ -415,7 +428,6 @@
   </div>
 
   <script>
-    // 状態管理
     let appState = 'IDLE';
 
     const MAX_RECORD_SECONDS = 10;
@@ -430,7 +442,6 @@
     let gainNode = null;
     let wakeLock = null;
 
-    // UI要素
     const stage = document.getElementById('stage');
     const mainButton = document.getElementById('mainButton');
     const buttonIcon = document.getElementById('buttonIcon');
@@ -457,7 +468,6 @@
       pause: '<svg viewBox="0 0 24 24"><line x1="8" y1="5" x2="8" y2="19" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><line x1="16" y1="5" x2="16" y2="19" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>'
     };
 
-    // スリープ防止
     async function requestWakeLock() {
       if ('wakeLock' in navigator) {
         try {
@@ -472,7 +482,6 @@
       }
     }
 
-    // AudioContext の初期化（ユーザー操作の同期的コンテキストで即座にアンロック）
     function initAudioContext() {
       try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -492,7 +501,6 @@
       }
     }
 
-    // iOSの受話口モードをスピーカーモードへリセット（ノンブロッキング実行）
     function resetToSpeakerModeAsync() {
       try {
         const audio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
@@ -509,7 +517,6 @@
       }
     });
 
-    // メインボタンタップ処理（同期的に即座に分岐、一切ブロッキングさせない）
     mainButton.addEventListener('click', (e) => {
       e.preventDefault();
       initAudioContext();
@@ -538,7 +545,6 @@
       modal.classList.remove('active');
     });
 
-    // 録音開始
     async function startRecording() {
       setUIState('RECORDING');
       statusText.textContent = 'マイクをつないでいます...';
@@ -572,13 +578,11 @@
         };
 
         mediaRecorder.onstop = async () => {
-          // マイクを完全に停止・破棄
           if (currentStream) {
             currentStream.getTracks().forEach(track => track.stop());
             currentStream = null;
           }
 
-          // iOSの受話口モード解除を非同期でキック
           resetToSpeakerModeAsync();
 
           const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'audio/mp4' });
@@ -624,7 +628,6 @@
       }
     }
 
-    // 音声データのデコード
     async function processRecordedAudio(blob) {
       statusText.textContent = 'おとを じゅんび中...';
       statusDetail.textContent = 'すこしだけ まってね';
@@ -634,10 +637,7 @@
         const arrayBuffer = await blob.arrayBuffer();
         audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-        // 音量自動最大化（ノーマライズ）
         normalizeAudio(audioBuffer);
-
-        // ループ境界のマイクロフェード（5ms）
         applyMicroFade(audioBuffer);
 
         setUIState('READY');
@@ -648,7 +648,6 @@
       }
     }
 
-    // ノーマライズ処理
     function normalizeAudio(buffer) {
       let maxPeak = 0;
       for (let c = 0; c < buffer.numberOfChannels; c++) {
@@ -670,10 +669,9 @@
       }
     }
 
-    // クリックノイズ防止（先頭と末尾の5msフェード）
     function applyMicroFade(buffer) {
       const sampleRate = buffer.sampleRate;
-      const fadeDuration = 0.005; // 5ms
+      const fadeDuration = 0.005;
       const fadeSamples = Math.floor(sampleRate * fadeDuration);
 
       for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
@@ -690,7 +688,6 @@
       }
     }
 
-    // ループ再生
     function startLoopPlayback() {
       if (!audioBuffer) return;
 
