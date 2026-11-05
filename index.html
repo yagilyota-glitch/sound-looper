@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>おとループ</title>
+  <style>
+    :root {
+      --bg-color: #12141a;
+      --card-bg: #1c202a;
+      --text-main: #f0f2f5;
+      --text-sub: #9aa4b2;
+      --record-color: #ef4444;
+      --record-active: #dc2626;
+      --play-color: #10b981;
+      --play-active: #059669;
+      --stop-color: #64748b;
+      --accent: #3b82f6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "BIZ UDPGothic", Meiryo, sans-serif;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 20px;
+      touch-action: manipulation;
+      overflow: hidden;
+    }
+
+    header {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-top: 4px;
+    }
+
+    /* メイン表示領域 */
+    .stage {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: auto 0;
+    }
+
+    /* アニメーション波紋リング */
+    .ripple-ring {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0;
+      box-sizing: border-box;
+    }
+
+    .recording .ripple-ring {
+      border: 3px solid var(--record-color);
+      animation: ripplePulse 1.2s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+    }
+
+    .playing .ripple-ring {
+      border: 3px solid var(--play-color);
+      animation: ripplePulse 1.8s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+    }
+
+    @keyframes ripplePulse {
+      0% {
+        transform: scale(0.85);
+        opacity: 0.8;
+      }
+      100% {
+        transform: scale(1.35);
+        opacity: 0;
+      }
+    }
+
+    /* プログレス円弧（SVG） */
+    .progress-svg {
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      width: 300px;
+      height: 300px;
+      transform: rotate(-90deg);
+      pointer-events: none;
+    }
+
+    .progress-track {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.08);
+      stroke-width: 8;
+    }
+
+    .progress-bar {
+      fill: none;
+      stroke: var(--record-color);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 879.6;
+      stroke-dashoffset: 879.6;
+      transition: stroke-dashoffset 0.1s linear;
+    }
+
+    /* メインのアクションボタン */
+    .main-button {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+      transition: transform 0.15s ease, background-color 0.25s ease, box-shadow 0.25s ease;
+      z-index: 2;
+    }
+
+    .main-button:active {
+      transform: scale(0.94);
+    }
+
+    /* ボタンスタイル：録音準備 */
+    .btn-record-ready {
+      background: linear-gradient(135deg, #ef4444, #b91c1c);
+      color: #ffffff;
+    }
+
+    /* ボタンスタイル：録音中 */
+    .btn-recording {
+      background: linear-gradient(135deg, #dc2626, #991b1b);
+      color: #ffffff;
+      animation: recordGlow 1s ease-in-out infinite alternate;
+    }
+
+    @keyframes recordGlow {
+      from { box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+      to { box-shadow: 0 0 45px rgba(239, 68, 68, 0.85); }
+    }
+
+    /* ボタンスタイル：再生準備 */
+    .btn-play-ready {
+      background: linear-gradient(135deg, #10b981, #047857);
+      color: #ffffff;
+    }
+
+    /* ボタンスタイル：再生中 */
+    .btn-playing {
+      background: linear-gradient(135deg, #059669, #065f46);
+      color: #ffffff;
+      animation: playGlow 1.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes playGlow {
+      from { box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+      to { box-shadow: 0 0 40px rgba(16, 185, 129, 0.8); }
+    }
+
+    .button-icon {
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .button-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+
+    .button-label {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .button-sublabel {
+      font-size: 12px;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+
+    /* 状態ガイドテキスト */
+    .status-area {
+      text-align: center;
+      min-height: 52px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .status-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .status-detail {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-top: 4px;
+    }
+
+    /* 下部サブアクション */
+    .footer-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      max-width: 320px;
+      margin-bottom: 12px;
+    }
+
+    .sub-button {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+      padding: 12px 24px;
+      border-radius: 9999px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    .sub-button:active {
+      background: rgba(255, 255, 255, 0.16);
+      transform: scale(0.97);
+    }
+
+    .sub-button.hidden {
+      display: none;
+    }
+
+    /* 音量バー */
+    .volume-box {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 10px 16px;
+      border-radius: 14px;
+    }
+
+    .volume-label {
+      font-size: 13px;
+      color: var(--text-sub);
+      white-space: nowrap;
+    }
+
+    .volume-slider {
+      flex: 1;
+      accent-color: var(--accent);
+      cursor: pointer;
+      height: 6px;
+    }
+
+    /* エラー通知モーダル */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      padding: 24px;
+      max-width: 320px;
+      text-align: center;
+    }
+
+    .modal-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .modal-text {
+      font-size: 14px;
+      color: var(--text-sub);
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+
+    .modal-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="title">おとループ</div>
+    <div class="subtitle">おとを とって、みんなで ならそう</div>
+  </header>
+
+  <!-- 中央ステージ -->
+  <div class="stage" id="stage">
+    <div class="ripple-ring"></div>
+
+    <!-- 録音時間プログレスサークル（最大10秒） -->
+    <svg class="progress-svg" viewBox="0 0 300 300">
+      <circle class="progress-track" cx="150" cy="150" r="140"></circle>
+      <circle class="progress-bar" id="progressBar" cx="150" cy="150" r="140"></circle>
+    </svg>
+
+    <!-- メイン操作ボタン -->
+    <button class="main-button btn-record-ready" id="mainButton">
+      <div class="button-icon" id="buttonIcon">
+        <!-- 録音アイコン（円） -->
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle></svg>
+      </div>
+      <div class="button-label" id="buttonLabel">おとをとる</div>
+      <div class="button-sublabel" id="buttonSubLabel">タップしてスタート</div>
+    </button>
+  </div>
+
+  <!-- 状態表示 -->
+  <div class="status-area">
+    <div class="status-text" id="statusText">ボタンをおしてね</div>
+    <div class="status-detail" id="statusDetail">すきなおとを まわりから さがそう</div>
+  </div>
+
+  <!-- 下部操作ボタン・音量 -->
+  <div class="footer-actions">
+    <!-- 再録音ボタン（録音後に出現） -->
+    <button class="sub-button hidden" id="reRecordButton">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+      </svg>
+      べつの おとを とる
+    </button>
+
+    <!-- 音量調整 -->
+    <div class="volume-box">
+      <span class="volume-label">おとのおおきさ</span>
+      <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="0.9">
+    </div>
+  </div>
+
+  <!-- マイク権限・エラー案内モーダル -->
+  <div class="modal" id="modal">
+    <div class="modal-box">
+      <div class="modal-title" id="modalTitle">マイクをつかいます</div>
+      <div class="modal-text" id="modalText">ブラウザの「マイクの使用を許可」をおしてください。</div>
+      <button class="modal-btn" id="modalClose">わかりました</button>
+    </div>
+  </div>
+
+  <script>
+    // 状態管理
+    // IDLE: 初期状態（録音前）
+    // RECORDING: 録音中
+    // READY: 録音済み・停止中
+    // PLAYING: ループ再生中
+    let appState = 'IDLE';
+
+    const MAX_RECORD_SECONDS = 10; // 最大録音秒数
+    let recordStartTime = 0;
+    let recordTimer = null;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let audioContext = null;
+    let audioBuffer = null;
+    let sourceNode = null;
+    let gainNode = null;
+    let wakeLock = null;
+
+    // UI要素
+    const stage = document.getElementById('stage');
+    const mainButton = document.getElementById('mainButton');
+    const buttonIcon = document.getElementById('buttonIcon');
+    const buttonLabel = document.getElementById('buttonLabel');
+    const buttonSubLabel = document.getElementById('buttonSubLabel');
+    const statusText = document.getElementById('statusText');
+    const statusDetail = document.getElementById('statusDetail');
+    const progressBar = document.getElementById('progressBar');
+    const reRecordButton = document.getElementById('reRecordButton');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalText = document.getElementById('modalText');
+    const modalClose = document.getElementById('modalClose');
+
+    const CIRCUMFERENCE = 2 * Math.PI * 140; // 879.6
+    progressBar.style.strokeDasharray = CIRCUMFERENCE;
+    progressBar.style.strokeDashoffset = CIRCUMFERENCE;
+
+    // SVGアイコン定義
+    const ICONS = {
+      record: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle></svg>',
+      stopRecord: '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>',
+      play: '<svg viewBox="0 0 24 24"><polygon points="7,5 19,12 7,19"></polygon></svg>',
+      pause: '<svg viewBox="0 0 24 24"><line x1="8" y1="5" x2="8" y2="19" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><line x1="16" y1="5" x2="16" y2="19" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>'
+    };
+
+    // 画面スリープ防止（Wake Lock API）
+    async function requestWakeLock() {
+      if ('wakeLock' in navigator) {
+        try {
+          wakeLock = await navigator.wakeLock.request('screen');
+        } catch (err) {
+          // サポート外または拒否時は何もしない
+        }
+      }
+    }
+
+    function releaseWakeLock() {
+      if (wakeLock) {
+        wakeLock.release().then(() => { wakeLock = null; }).catch(() => {});
+      }
+    }
+
+    // AudioContext の初期化（ユーザー操作でアンロック）
+    function initAudioContext() {
+      if (!audioContext) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        audioContext = new AudioCtx();
+        gainNode = audioContext.createGain();
+        gainNode.gain.value = parseFloat(volumeSlider.value);
+        gainNode.connect(audioContext.destination);
+      }
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+    }
+
+    // 音量スライダー連動
+    volumeSlider.addEventListener('input', (e) => {
+      const vol = parseFloat(e.target.value);
+      if (gainNode && audioContext) {
+        gainNode.gain.setValueAtTime(vol, audioContext.currentTime);
+      }
+    });
+
+    // メインボタンタップ時
+    mainButton.addEventListener('click', async () => {
+      initAudioContext();
+      requestWakeLock();
+
+      switch (appState) {
+        case 'IDLE':
+          await startRecording();
+          break;
+        case 'RECORDING':
+          stopRecording();
+          break;
+        case 'READY':
+          startLoopPlayback();
+          break;
+        case 'PLAYING':
+          stopLoopPlayback();
+          break;
+      }
+    });
+
+    // 「べつの おとを とる」ボタンタップ時
+    reRecordButton.addEventListener('click', async () => {
+      if (appState === 'PLAYING') {
+        stopLoopPlayback();
+      }
+      setUIState('IDLE');
+    });
+
+    modalClose.addEventListener('click', () => {
+      modal.classList.remove('active');
+    });
+
+    // 録音開始
+    async function startRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }
+        });
+
+        // サポートされているMIMEタイプの選定
+        let options = {};
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          options = { mimeType: 'audio/webm;codecs=opus' };
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          options = { mimeType: 'audio/mp4' };
+        } else if (MediaRecorder.isTypeSupported('audio/aac')) {
+          options = { mimeType: 'audio/aac' };
+        }
+
+        mediaRecorder = new MediaRecorder(stream, options);
+        recordedChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            recordedChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = async () => {
+          // ストリームのトラックを停止してマイクを解放
+          stream.getTracks().forEach(track => track.stop());
+          const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+          await processRecordedAudio(blob);
+        };
+
+        mediaRecorder.start(100);
+        recordStartTime = Date.now();
+        setUIState('RECORDING');
+
+        // プログレスバー更新と自動リミッター（最大10秒）
+        updateProgress();
+
+      } catch (err) {
+        console.error('マイク起動エラー:', err);
+        showModal('マイクがつかえません', 'マイクのきょかが ひつようです。ブラウザの設定でマイクをきょかしてください。');
+        setUIState('IDLE');
+      }
+    }
+
+    function updateProgress() {
+      if (appState !== 'RECORDING') return;
+
+      const elapsed = (Date.now() - recordStartTime) / 1000;
+      const progress = Math.min(elapsed / MAX_RECORD_SECONDS, 1);
+      const offset = CIRCUMFERENCE * (1 - progress);
+      progressBar.style.strokeDashoffset = offset;
+
+      const remaining = Math.max(0, Math.ceil(MAX_RECORD_SECONDS - elapsed));
+      statusText.textContent = `ろくおん中（のこり ${remaining} びょう）`;
+
+      if (elapsed >= MAX_RECORD_SECONDS) {
+        stopRecording();
+      } else {
+        recordTimer = requestAnimationFrame(updateProgress);
+      }
+    }
+
+    // 録音停止
+    function stopRecording() {
+      if (recordTimer) {
+        cancelAnimationFrame(recordTimer);
+        recordTimer = null;
+      }
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+    }
+
+    // 録音データのデコードとマイクロフェード処理
+    async function processRecordedAudio(blob) {
+      statusText.textContent = 'おとを じゅんび中...';
+      statusDetail.textContent = 'すこしだけ まってね';
+
+      try {
+        const arrayBuffer = await blob.arrayBuffer();
+        audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+        // ループ時のクリックノイズ（プチッという音）を防ぐマイクロフェード処理
+        applyMicroFade(audioBuffer);
+
+        setUIState('READY');
+      } catch (err) {
+        console.error('音声デコード失敗:', err);
+        showModal('おとが うまくとれませんでした', 'もういちど ろくおんボタンを おしてください。');
+        setUIState('IDLE');
+      }
+    }
+
+    // クリックノイズ防止用：前後5msのクロスフェード処理
+    function applyMicroFade(buffer) {
+      const sampleRate = buffer.sampleRate;
+      const fadeDuration = 0.005; // 5ミリ秒
+      const fadeSamples = Math.floor(sampleRate * fadeDuration);
+
+      for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+        const data = buffer.getChannelData(channel);
+        const length = data.length;
+        if (length <= fadeSamples * 2) continue;
+
+        // フェードイン
+        for (let i = 0; i < fadeSamples; i++) {
+          data[i] *= (i / fadeSamples);
+        }
+        // フェードアウト
+        for (let i = 0; i < fadeSamples; i++) {
+          data[length - 1 - i] *= (i / fadeSamples);
+        }
+      }
+    }
+
+    // ループ再生開始
+    function startLoopPlayback() {
+      if (!audioBuffer || !audioContext) return;
+
+      initAudioContext();
+
+      sourceNode = audioContext.createBufferSource();
+      sourceNode.buffer = audioBuffer;
+      sourceNode.loop = true; // 継ぎ目のない完全ループ
+      sourceNode.connect(gainNode);
+
+      sourceNode.start(0);
+      setUIState('PLAYING');
+    }
+
+    // ループ再生停止
+    function stopLoopPlayback() {
+      if (sourceNode) {
+        try {
+          sourceNode.stop();
+          sourceNode.disconnect();
+        } catch (e) {}
+        sourceNode = null;
+      }
+      releaseWakeLock();
+      setUIState('READY');
+    }
+
+    // UI状態の更新
+    function setUIState(state) {
+      appState = state;
+
+      // クラスのリセット
+      stage.classList.remove('recording', 'playing');
+      mainButton.className = 'main-button';
+
+      switch (state) {
+        case 'IDLE':
+          mainButton.classList.add('btn-record-ready');
+          buttonIcon.innerHTML = ICONS.record;
+          buttonLabel.textContent = 'おとをとる';
+          buttonSubLabel.textContent = 'タップしてスタート';
+          statusText.textContent = 'ボタンをおしてね';
+          statusDetail.textContent = 'すきなおとを まわりから さがそう';
+          progressBar.style.strokeDashoffset = CIRCUMFERENCE;
+          reRecordButton.classList.add('hidden');
+          break;
+
+        case 'RECORDING':
+          stage.classList.add('recording');
+          mainButton.classList.add('btn-recording');
+          buttonIcon.innerHTML = ICONS.stopRecord;
+          buttonLabel.textContent = 'とめる';
+          buttonSubLabel.textContent = 'もういちど タップ';
+          statusDetail.textContent = 'おとを きいているよ...';
+          reRecordButton.classList.add('hidden');
+          break;
+
+        case 'READY':
+          mainButton.classList.add('btn-play-ready');
+          buttonIcon.innerHTML = ICONS.play;
+          buttonLabel.textContent = 'ならす';
+          buttonSubLabel.textContent = 'ループさいせい';
+          const duration = audioBuffer ? audioBuffer.duration.toFixed(1) : '0';
+          statusText.textContent = 'じゅんびOK！（' + duration + 'びょう）';
+          statusDetail.textContent = '「ならす」をおすと ずっと音がくりかえすよ';
+          progressBar.style.strokeDashoffset = CIRCUMFERENCE;
+          reRecordButton.classList.remove('hidden');
+          break;
+
+        case 'PLAYING':
+          stage.classList.add('playing');
+          mainButton.classList.add('btn-playing');
+          buttonIcon.innerHTML = ICONS.pause;
+          buttonLabel.textContent = 'とめる';
+          buttonSubLabel.textContent = 'タップでストップ';
+          statusText.textContent = 'おとが なっているよ';
+          statusDetail.textContent = 'みんなの音といっしょに きいてみよう';
+          reRecordButton.classList.remove('hidden');
+          break;
+      }
+    }
+
+    function showModal(title, text) {
+      modalTitle.textContent = title;
+      modalText.textContent = text;
+      modal.classList.add('active');
+    }
+  </script>
+</body>
+</html>
