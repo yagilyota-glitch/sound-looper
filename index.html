@@ -5,20 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <title>おとループ DJ</title>
+  <title>おとループ</title>
   <style>
     :root {
-      --chassis-bg: #eef2f6;
-      --panel-bg: #ffffff;
-      --panel-border: #d5dde5;
+      --bg-color: #f7f9fc;
+      --card-bg: #ffffff;
       --text-main: #1e293b;
       --text-sub: #64748b;
-      --led-red: #ef4444;
-      --led-green: #10b981;
-      --led-blue: #3b82f6;
-      --led-amber: #f59e0b;
-      --vinyl-black: #18191c;
-      --vinyl-groove: #26282e;
+      --border-color: #e2e8f0;
+      --record-color: #ef4444;
+      --record-gradient: linear-gradient(135deg, #f87171, #dc2626);
+      --play-color: #059669;
+      --play-gradient: linear-gradient(135deg, #34d399, #059669);
+      --accent: #2563eb;
     }
 
     * {
@@ -31,409 +30,286 @@
     }
 
     body {
-      background-color: var(--chassis-bg);
+      background-color: var(--bg-color);
       color: var(--text-main);
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "BIZ UDPGothic", Meiryo, sans-serif;
       min-height: 100vh;
       min-height: -webkit-fill-available;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      padding: 16px 16px 20px;
+      padding: 20px 20px 24px;
       touch-action: manipulation;
       overflow: hidden;
     }
 
-    /* DJトップパネル */
-    .dj-header {
-      width: 100%;
-      max-width: 360px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: var(--panel-bg);
-      border: 1px solid var(--panel-border);
-      border-radius: 12px;
-      padding: 8px 16px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+    header {
+      text-align: center;
+      margin-top: 6px;
     }
 
-    .brand-logo {
-      font-size: 16px;
-      font-weight: 900;
-      letter-spacing: 0.12em;
+    .title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
       color: #0f172a;
-      text-transform: uppercase;
     }
 
-    .brand-sub {
-      font-size: 10px;
-      font-weight: 700;
+    .subtitle {
+      font-size: 13px;
       color: var(--text-sub);
-      letter-spacing: 0.08em;
-      margin-left: 6px;
+      margin-top: 4px;
+      font-weight: 500;
     }
 
-    /* DJインジケーターランプ */
-    .dj-status-badge {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 9999px;
-      background: #f1f5f9;
-      color: var(--text-sub);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #94a3b8;
-      transition: background-color 0.2s, box-shadow 0.2s;
-    }
-
-    .status-dot.active-rec {
-      background: var(--led-red);
-      box-shadow: 0 0 8px var(--led-red);
-      animation: blink 0.8s infinite alternate;
-    }
-
-    .status-dot.active-play {
-      background: var(--led-green);
-      box-shadow: 0 0 8px var(--led-green);
-    }
-
-    @keyframes blink {
-      from { opacity: 0.4; }
-      to { opacity: 1; }
-    }
-
-    /* ターンテーブル・デッキ */
-    .deck-container {
+    /* メイン表示領域 */
+    .stage {
       position: relative;
       width: 270px;
       height: 270px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--panel-bg);
-      border: 2px solid var(--panel-border);
-      border-radius: 50%;
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08), inset 0 2px 6px rgba(0, 0, 0, 0.04);
       margin: auto 0;
     }
 
-    /* レコード盤（ヴァイナル） */
-    .vinyl-record {
+    .ripple-ring {
       position: absolute;
-      width: 246px;
-      height: 246px;
-      border-radius: 50%;
-      background: radial-gradient(circle, 
-        #2a2c33 0%, 
-        #1c1d22 30%, 
-        #24262c 45%, 
-        #18191d 60%, 
-        #24262c 75%, 
-        #151619 100%
-      );
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.4, 1);
-    }
-
-    /* レコードの溝（グルーヴライン） */
-    .vinyl-record::before {
-      content: "";
-      position: absolute;
-      inset: 12px;
-      border-radius: 50%;
-      border: 1px dashed rgba(255, 255, 255, 0.07);
-      pointer-events: none;
-    }
-
-    .vinyl-record::after {
-      content: "";
-      position: absolute;
-      inset: 34px;
-      border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      pointer-events: none;
-    }
-
-    /* 回転アニメーション */
-    .rotating {
-      animation: spinVinyl var(--spin-duration, 1.8s) linear infinite;
-    }
-
-    @keyframes spinVinyl {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    /* レコード中央ラベル（メインボタン） */
-    .turntable-button {
-      position: relative;
-      width: 124px;
-      height: 124px;
-      border-radius: 50%;
-      border: 4px solid #ffffff;
-      outline: none;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-      transition: transform 0.1s ease, background 0.2s ease, box-shadow 0.2s ease;
-      z-index: 10;
-      color: #ffffff;
-      pointer-events: auto;
-    }
-
-    .turntable-button:active {
-      transform: scale(0.92);
-    }
-
-    /* センタースピンドル穴 */
-    .turntable-button::after {
-      content: "";
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: #ffffff;
-      border: 2px solid #94a3b8;
-      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
-      top: 10px;
-    }
-
-    .btn-rec {
-      background: linear-gradient(135deg, #ef4444, #b91c1c);
-    }
-
-    .btn-recording {
-      background: linear-gradient(135deg, #dc2626, #991b1b);
-      animation: recPulse 1s infinite alternate;
-    }
-
-    @keyframes recPulse {
-      from { box-shadow: 0 0 12px rgba(239, 68, 68, 0.5); }
-      to { box-shadow: 0 0 28px rgba(239, 68, 68, 0.9); }
-    }
-
-    .btn-play {
-      background: linear-gradient(135deg, #10b981, #047857);
-    }
-
-    .btn-playing {
-      background: linear-gradient(135deg, #059669, #065f46);
-    }
-
-    .tt-icon {
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: 14px;
-      margin-bottom: 2px;
-    }
-
-    .tt-icon svg {
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
-      fill: currentColor;
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0;
+      box-sizing: border-box;
     }
 
-    .tt-label {
-      font-size: 15px;
-      font-weight: 800;
-      letter-spacing: 0.05em;
+    .recording .ripple-ring {
+      border: 3px solid var(--record-color);
+      animation: ripplePulse 1.2s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
     }
 
-    /* 録音進行メーター円周 */
-    .deck-progress-svg {
+    .playing .ripple-ring {
+      border: 3px solid var(--play-color);
+      animation: ripplePulse 1.6s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+    }
+
+    @keyframes ripplePulse {
+      0% {
+        transform: scale(0.85);
+        opacity: 0.8;
+      }
+      100% {
+        transform: scale(1.35);
+        opacity: 0;
+      }
+    }
+
+    .progress-svg {
       position: absolute;
-      width: 270px;
-      height: 270px;
+      top: -10px;
+      left: -10px;
+      width: 290px;
+      height: 290px;
       transform: rotate(-90deg);
       pointer-events: none;
     }
 
-    .deck-track {
+    .progress-track {
       fill: none;
-      stroke: rgba(0, 0, 0, 0.04);
-      stroke-width: 6;
+      stroke: #e2e8f0;
+      stroke-width: 8;
     }
 
-    .deck-bar {
+    .progress-bar {
       fill: none;
-      stroke: var(--led-red);
-      stroke-width: 6;
+      stroke: var(--record-color);
+      stroke-width: 8;
       stroke-linecap: round;
       stroke-dasharray: 848.2;
       stroke-dashoffset: 848.2;
       transition: stroke-dashoffset 0.1s linear;
     }
 
-    /* DJミキサーコントロール（下部モジュール） */
-    .mixer-panel {
-      width: 100%;
-      max-width: 360px;
-      background: var(--panel-bg);
-      border: 1px solid var(--panel-border);
-      border-radius: 16px;
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-    }
-
-    /* 状態ガイド */
-    .mixer-display {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #f8fafc;
-      border: 1px solid var(--panel-border);
-      border-radius: 8px;
-      padding: 8px 12px;
-    }
-
-    .display-screen {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .display-title {
-      font-size: 14px;
-      font-weight: 800;
-      color: var(--text-main);
-    }
-
-    .display-sub {
-      font-size: 11px;
-      color: var(--text-sub);
-      font-weight: 500;
-      margin-top: 2px;
-    }
-
-    /* DJ VUメーター（LEDバーアニメーション） */
-    .vu-meter {
-      display: flex;
-      gap: 3px;
-      align-items: flex-end;
-      height: 22px;
-    }
-
-    .vu-bar {
-      width: 5px;
-      height: 4px;
-      border-radius: 1px;
-      background: #cbd5e1;
-      transition: height 0.1s ease, background-color 0.1s ease;
-    }
-
-    .playing .vu-bar:nth-child(1) { height: 12px; background: #10b981; }
-    .playing .vu-bar:nth-child(2) { height: 18px; background: #10b981; }
-    .playing .vu-bar:nth-child(3) { height: 22px; background: #f59e0b; }
-    .playing .vu-bar:nth-child(4) { height: 16px; background: #10b981; }
-    .playing .vu-bar:nth-child(5) { height: 8px; background: #10b981; }
-
-    /* DJピッチ / スピードフェーダー */
-    .fader-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .fader-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-sub);
-      letter-spacing: 0.05em;
-    }
-
-    .fader-val {
-      color: var(--accent);
-      font-family: monospace;
-      font-size: 12px;
-    }
-
-    .dj-fader {
-      -webkit-appearance: none;
-      width: 100%;
-      height: 8px;
-      border-radius: 4px;
-      background: #e2e8f0;
+    /* メイン操作ボタン */
+    .main-button {
+      position: relative;
+      width: 210px;
+      height: 210px;
+      border-radius: 50%;
+      border: none;
       outline: none;
       cursor: pointer;
-    }
-
-    .dj-fader::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 24px;
-      height: 24px;
-      border-radius: 6px;
-      background: #ffffff;
-      border: 2px solid #0f172a;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-      cursor: pointer;
-    }
-
-    /* サブアクションボタングループ */
-    .mixer-buttons {
       display: flex;
-      gap: 10px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(15, 23, 42, 0.06);
+      transition: transform 0.1s ease, box-shadow 0.2s ease;
+      z-index: 10;
+      pointer-events: auto;
     }
 
-    .cue-btn {
-      flex: 1;
-      background: #f1f5f9;
-      border: 1px solid var(--panel-border);
-      color: var(--text-main);
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 800;
-      cursor: pointer;
+    .main-button:active {
+      transform: scale(0.93);
+    }
+
+    .btn-record-ready {
+      background: var(--record-gradient);
+      color: #ffffff;
+    }
+
+    .btn-recording {
+      background: linear-gradient(135deg, #ef4444, #b91c1c);
+      color: #ffffff;
+      animation: recordGlow 1.2s ease-in-out infinite alternate;
+    }
+
+    @keyframes recordGlow {
+      from { box-shadow: 0 8px 24px rgba(239, 68, 68, 0.35); }
+      to { box-shadow: 0 16px 48px rgba(239, 68, 68, 0.7); }
+    }
+
+    .btn-play-ready {
+      background: var(--play-gradient);
+      color: #ffffff;
+    }
+
+    .btn-playing {
+      background: linear-gradient(135deg, #10b981, #047857);
+      color: #ffffff;
+      animation: playGlow 1.4s ease-in-out infinite alternate;
+    }
+
+    @keyframes playGlow {
+      from { box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35); }
+      to { box-shadow: 0 16px 48px rgba(16, 185, 129, 0.7); }
+    }
+
+    .button-icon {
+      width: 58px;
+      height: 58px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      letter-spacing: 0.04em;
-      transition: background 0.15s, transform 0.1s;
+      margin-bottom: 6px;
+      pointer-events: none;
     }
 
-    .cue-btn:active {
-      background: #e2e8f0;
+    .button-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+
+    .button-label {
+      font-size: 23px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+    }
+
+    .button-sublabel {
+      font-size: 12px;
+      opacity: 0.9;
+      margin-top: 4px;
+      font-weight: 600;
+      pointer-events: none;
+    }
+
+    .status-area {
+      text-align: center;
+      min-height: 52px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .status-text {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .status-detail {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-top: 4px;
+    }
+
+    .footer-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .sub-button {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 12px 24px;
+      border-radius: 9999px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+      transition: background-color 0.15s, transform 0.1s, box-shadow 0.15s;
+    }
+
+    .sub-button:active {
+      background: #f1f5f9;
       transform: scale(0.97);
     }
 
-    .cue-btn.hidden {
+    .sub-button.hidden {
       display: none;
     }
 
-    .dj-notice {
-      font-size: 10px;
-      color: #94a3b8;
-      text-align: center;
-      line-height: 1.3;
+    .volume-box {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      padding: 10px 16px;
+      border-radius: 14px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
     }
 
-    /* モーダル */
+    .volume-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-sub);
+      white-space: nowrap;
+    }
+
+    .volume-slider {
+      flex: 1;
+      accent-color: var(--accent);
+      cursor: pointer;
+      height: 6px;
+    }
+
+    .notice-text {
+      font-size: 11px;
+      color: #94a3b8;
+      text-align: center;
+      line-height: 1.4;
+      margin-top: 2px;
+    }
+
     .modal {
       display: none;
       position: fixed;
@@ -452,33 +328,35 @@
 
     .modal-box {
       background: #ffffff;
-      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
       padding: 24px;
       max-width: 320px;
       text-align: center;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
     }
 
     .modal-title {
-      font-size: 17px;
-      font-weight: 800;
-      margin-bottom: 8px;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--text-main);
     }
 
     .modal-text {
-      font-size: 13px;
+      font-size: 14px;
       color: var(--text-sub);
       line-height: 1.5;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
     }
 
     .modal-btn {
-      background: #0f172a;
+      background: var(--accent);
       color: #ffffff;
       border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-size: 14px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 15px;
       font-weight: 700;
       cursor: pointer;
       width: 100%;
@@ -487,97 +365,65 @@
 </head>
 <body>
 
-  <!-- DJヘッダー -->
-  <header class="dj-header">
-    <div style="display:flex; align-items:baseline;">
-      <span class="brand-logo">LOOP-DJ</span>
-      <span class="brand-sub">DECK 01</span>
-    </div>
-    <div class="dj-status-badge">
-      <div class="status-dot" id="statusDot"></div>
-      <span id="badgeLabel">STANDBY</span>
-    </div>
+  <header>
+    <div class="title">おとループ</div>
+    <div class="subtitle">おとを とって、みんなで ならそう</div>
   </header>
 
-  <!-- ターンテーブルデッキ -->
-  <div class="deck-container" id="deckContainer">
+  <!-- 中央ステージ -->
+  <div class="stage" id="stage">
+    <div class="ripple-ring"></div>
+
     <!-- 録音プログレスリング -->
-    <svg class="deck-progress-svg" viewBox="0 0 270 270">
-      <circle class="deck-track" cx="135" cy="135" r="130"></circle>
-      <circle class="deck-bar" id="progressBar" cx="135" cy="135" r="130"></circle>
+    <svg class="progress-svg" viewBox="0 0 290 290">
+      <circle class="progress-track" cx="145" cy="145" r="135"></circle>
+      <circle class="progress-bar" id="progressBar" cx="145" cy="145" r="135"></circle>
     </svg>
 
-    <!-- ヴァイナルレコード盤 -->
-    <div class="vinyl-record" id="vinylRecord">
-      <!-- センターボタン（盤のレーベル） -->
-      <button class="turntable-button btn-rec" id="mainButton">
-        <div class="tt-icon" id="buttonIcon">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"></circle></svg>
-        </div>
-        <div class="tt-label" id="buttonLabel">REC</div>
-      </button>
+    <!-- メイン操作ボタン -->
+    <button class="main-button btn-record-ready" id="mainButton">
+      <div class="button-icon" id="buttonIcon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle></svg>
+      </div>
+      <div class="button-label" id="buttonLabel">おとをとる</div>
+      <div class="button-sublabel" id="buttonSubLabel">タップしてスタート</div>
+    </button>
+  </div>
+
+  <!-- 状態表示 -->
+  <div class="status-area">
+    <div class="status-text" id="statusText">ボタンをおしてね</div>
+    <div class="status-detail" id="statusDetail">すきなおとを まわりから さがそう</div>
+  </div>
+
+  <!-- 下部操作ボタン・音量 -->
+  <div class="footer-actions">
+    <!-- 再録音ボタン -->
+    <button class="sub-button hidden" id="reRecordButton">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+      </svg>
+      べつの おとを とる
+    </button>
+
+    <!-- 音量調整 -->
+    <div class="volume-box">
+      <span class="volume-label">おとのおおきさ</span>
+      <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="1.0">
+    </div>
+
+    <!-- 注意事項（iPhoneマナーモード等） -->
+    <div class="notice-text">
+      ※音が鳴らない・小さいときはiPhoneの消音モード（マナーモード）をオフにし、音量を上げてください。
     </div>
   </div>
 
-  <!-- DJミキサーパネル -->
-  <div class="mixer-panel" id="mixerPanel">
-    <!-- ディスプレイ＆VUメーター -->
-    <div class="mixer-display">
-      <div class="display-screen">
-        <span class="display-title" id="statusText">レコードをおして ろくおん</span>
-        <span class="display-sub" id="statusDetail">まわりの音をとってみよう</span>
-      </div>
-      <div class="vu-meter">
-        <div class="vu-bar"></div>
-        <div class="vu-bar"></div>
-        <div class="vu-bar"></div>
-        <div class="vu-bar"></div>
-        <div class="vu-bar"></div>
-      </div>
-    </div>
-
-    <!-- DJピッチ / スピードフェーダー（音の速さと高さを変える） -->
-    <div class="fader-group">
-      <div class="fader-header">
-        <span>SPEED / PITCH (はやさ)</span>
-        <span class="fader-val" id="pitchVal">1.00x</span>
-      </div>
-      <input type="range" class="dj-fader" id="pitchSlider" min="0.5" max="1.8" step="0.05" value="1.0">
-    </div>
-
-    <!-- ボリュームフェーダー -->
-    <div class="fader-group">
-      <div class="fader-header">
-        <span>MASTER LEVEL (おと)</span>
-        <span class="fader-val" id="volumeVal">100%</span>
-      </div>
-      <input type="range" class="dj-fader" id="volumeSlider" min="0" max="1" step="0.05" value="1.0">
-    </div>
-
-    <!-- サブアクションボタン（再録音・リセット） -->
-    <div class="mixer-buttons">
-      <button class="cue-btn hidden" id="reRecordButton">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-        </svg>
-        べつの音をセット (NEW REC)
-      </button>
-      <button class="cue-btn hidden" id="pitchResetBtn">
-        SPEEDを元にもどす
-      </button>
-    </div>
-
-    <div class="dj-notice">
-      ※音が鳴らないときはiPhoneの消音スイッチをオフにし、音量を上げてください。
-    </div>
-  </div>
-
-  <!-- エラーモーダル -->
+  <!-- エラー案内モーダル -->
   <div class="modal" id="modal">
     <div class="modal-box">
       <div class="modal-title" id="modalTitle">マイクをつかいます</div>
       <div class="modal-text" id="modalText">ブラウザの「マイクの使用を許可」をおしてください。</div>
-      <button class="modal-btn" id="modalClose">OK</button>
+      <button class="modal-btn" id="modalClose">わかりました</button>
     </div>
   </div>
 
@@ -594,45 +440,39 @@
     let audioBuffer = null;
     let sourceNode = null;
     let gainNode = null;
-    let currentPlaybackRate = 1.0;
     let wakeLock = null;
 
-    // DOM要素
-    const vinylRecord = document.getElementById('vinylRecord');
+    const stage = document.getElementById('stage');
     const mainButton = document.getElementById('mainButton');
     const buttonIcon = document.getElementById('buttonIcon');
     const buttonLabel = document.getElementById('buttonLabel');
-    const statusDot = document.getElementById('statusDot');
-    const badgeLabel = document.getElementById('badgeLabel');
+    const buttonSubLabel = document.getElementById('buttonSubLabel');
     const statusText = document.getElementById('statusText');
     const statusDetail = document.getElementById('statusDetail');
     const progressBar = document.getElementById('progressBar');
-    const pitchSlider = document.getElementById('pitchSlider');
-    const pitchVal = document.getElementById('pitchVal');
-    const volumeSlider = document.getElementById('volumeSlider');
-    const volumeVal = document.getElementById('volumeVal');
     const reRecordButton = document.getElementById('reRecordButton');
-    const pitchResetBtn = document.getElementById('pitchResetBtn');
-    const mixerPanel = document.getElementById('mixerPanel');
+    const volumeSlider = document.getElementById('volumeSlider');
     const modal = document.getElementById('modal');
     const modalTitle = document.getElementById('modalTitle');
     const modalText = document.getElementById('modalText');
     const modalClose = document.getElementById('modalClose');
 
-    const CIRCUMFERENCE = 2 * Math.PI * 130; // 816.8
+    const CIRCUMFERENCE = 2 * Math.PI * 135; // 848.23
     progressBar.style.strokeDasharray = CIRCUMFERENCE;
     progressBar.style.strokeDashoffset = CIRCUMFERENCE;
 
     const ICONS = {
-      rec: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"></circle></svg>',
-      stopRec: '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>',
-      play: '<svg viewBox="0 0 24 24"><polygon points="8,5 19,12 8,19"></polygon></svg>',
+      record: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle></svg>',
+      stopRecord: '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>',
+      play: '<svg viewBox="0 0 24 24"><polygon points="7,5 19,12 7,19"></polygon></svg>',
       pause: '<svg viewBox="0 0 24 24"><line x1="8" y1="5" x2="8" y2="19" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><line x1="16" y1="5" x2="16" y2="19" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>'
     };
 
     async function requestWakeLock() {
       if ('wakeLock' in navigator) {
-        try { wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
+        try {
+          wakeLock = await navigator.wakeLock.request('screen');
+        } catch (e) {}
       }
     }
 
@@ -664,39 +504,19 @@
     function resetToSpeakerModeAsync() {
       try {
         const audio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
-        audio.play().then(() => { audio.pause(); }).catch(() => {});
+        audio.play().then(() => {
+          audio.pause();
+        }).catch(() => {});
       } catch (e) {}
     }
 
-    // ピッチ（スピード）スライダー
-    pitchSlider.addEventListener('input', (e) => {
-      currentPlaybackRate = parseFloat(e.target.value);
-      pitchVal.textContent = currentPlaybackRate.toFixed(2) + 'x';
-
-      // ヴァイナルの回転速度も連動変化
-      const spinSpeed = (1.8 / currentPlaybackRate).toFixed(2);
-      vinylRecord.style.setProperty('--spin-duration', spinSpeed + 's');
-
-      if (sourceNode && audioContext) {
-        sourceNode.playbackRate.setValueAtTime(currentPlaybackRate, audioContext.currentTime);
-      }
-    });
-
-    pitchResetBtn.addEventListener('click', () => {
-      pitchSlider.value = 1.0;
-      pitchSlider.dispatchEvent(new Event('input'));
-    });
-
-    // ボリュームスライダー
     volumeSlider.addEventListener('input', (e) => {
       const vol = parseFloat(e.target.value);
-      volumeVal.textContent = Math.round(vol * 100) + '%';
       if (gainNode && audioContext) {
         gainNode.gain.setValueAtTime(vol, audioContext.currentTime);
       }
     });
 
-    // レコード盤のメインボタンタップ
     mainButton.addEventListener('click', (e) => {
       e.preventDefault();
       initAudioContext();
@@ -725,10 +545,9 @@
       modal.classList.remove('active');
     });
 
-    // 録音開始
     async function startRecording() {
       setUIState('RECORDING');
-      statusText.textContent = 'マイク準備中...';
+      statusText.textContent = 'マイクをつないでいます...';
 
       try {
         currentStream = await navigator.mediaDevices.getUserMedia({
@@ -760,9 +579,10 @@
 
         mediaRecorder.onstop = async () => {
           if (currentStream) {
-            currentStream.getTracks().forEach(t => t.stop());
+            currentStream.getTracks().forEach(track => track.stop());
             currentStream = null;
           }
+
           resetToSpeakerModeAsync();
 
           const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'audio/mp4' });
@@ -775,7 +595,7 @@
 
       } catch (err) {
         console.error('マイクアクセス失敗:', err);
-        showModal('マイクがつかえません', 'ブラウザの設定でマイクを許可してください。');
+        showModal('マイクがつかえません', 'マイクのきょかが ひつようです。ブラウザの設定でマイクをきょかしてください。');
         setUIState('IDLE');
       }
     }
@@ -789,7 +609,7 @@
       progressBar.style.strokeDashoffset = offset;
 
       const remaining = Math.max(0, Math.ceil(MAX_RECORD_SECONDS - elapsed));
-      statusText.textContent = `録音中（残り ${remaining} 秒）`;
+      statusText.textContent = `ろくおん中（のこり ${remaining} びょう）`;
 
       if (elapsed >= MAX_RECORD_SECONDS) {
         stopRecording();
@@ -809,8 +629,8 @@
     }
 
     async function processRecordedAudio(blob) {
-      statusText.textContent = 'レコードを作成中...';
-      statusDetail.textContent = '少々お待ちください';
+      statusText.textContent = 'おとを じゅんび中...';
+      statusDetail.textContent = 'すこしだけ まってね';
 
       try {
         initAudioContext();
@@ -823,7 +643,7 @@
         setUIState('READY');
       } catch (err) {
         console.error('デコードエラー:', err);
-        showModal('録音に失敗しました', 'もう一度ボタンを押してください。');
+        showModal('おとが うまくとれませんでした', 'もういちど ろくおんボタンを おしてください。');
         setUIState('IDLE');
       }
     }
@@ -881,7 +701,6 @@
       sourceNode = audioContext.createBufferSource();
       sourceNode.buffer = audioBuffer;
       sourceNode.loop = true;
-      sourceNode.playbackRate.value = currentPlaybackRate;
       sourceNode.connect(gainNode);
 
       sourceNode.start(0);
@@ -903,62 +722,52 @@
     function setUIState(state) {
       appState = state;
 
-      // リセット
-      vinylRecord.classList.remove('rotating');
-      mixerPanel.classList.remove('playing');
-      statusDot.className = 'status-dot';
-      mainButton.className = 'turntable-button';
+      stage.classList.remove('recording', 'playing');
+      mainButton.className = 'main-button';
 
       switch (state) {
         case 'IDLE':
-          mainButton.classList.add('btn-rec');
-          buttonIcon.innerHTML = ICONS.rec;
-          buttonLabel.textContent = 'REC';
-          badgeLabel.textContent = 'STANDBY';
-          statusText.textContent = 'レコードをおして ろくおん';
-          statusDetail.textContent = 'まわりの音をとってみよう';
+          mainButton.classList.add('btn-record-ready');
+          buttonIcon.innerHTML = ICONS.record;
+          buttonLabel.textContent = 'おとをとる';
+          buttonSubLabel.textContent = 'タップしてスタート';
+          statusText.textContent = 'ボタンをおしてね';
+          statusDetail.textContent = 'すきなおとを まわりから さがそう';
           progressBar.style.strokeDashoffset = CIRCUMFERENCE;
           reRecordButton.classList.add('hidden');
-          pitchResetBtn.classList.add('hidden');
           break;
 
         case 'RECORDING':
+          stage.classList.add('recording');
           mainButton.classList.add('btn-recording');
-          buttonIcon.innerHTML = ICONS.stopRec;
-          buttonLabel.textContent = 'STOP';
-          statusDot.classList.add('active-rec');
-          badgeLabel.textContent = 'RECORDING';
-          statusDetail.textContent = 'おとをきいているよ...';
+          buttonIcon.innerHTML = ICONS.stopRecord;
+          buttonLabel.textContent = 'とめる';
+          buttonSubLabel.textContent = 'もういちど タップ';
+          statusDetail.textContent = 'おとを きいているよ...';
           reRecordButton.classList.add('hidden');
-          pitchResetBtn.classList.add('hidden');
           break;
 
         case 'READY':
-          mainButton.classList.add('btn-play');
+          mainButton.classList.add('btn-play-ready');
           buttonIcon.innerHTML = ICONS.play;
-          buttonLabel.textContent = 'PLAY';
-          statusDot.classList.add('active-play');
-          badgeLabel.textContent = 'CUE READY';
-          const dur = audioBuffer ? audioBuffer.duration.toFixed(1) : '0';
-          statusText.textContent = `準備完了（${dur} 秒のループ）`;
-          statusDetail.textContent = 'PLAYをおすと レコードがまわるよ';
+          buttonLabel.textContent = 'ならす';
+          buttonSubLabel.textContent = 'ループさいせい';
+          const duration = audioBuffer ? audioBuffer.duration.toFixed(1) : '0';
+          statusText.textContent = `じゅんびOK！（${duration}びょう）`;
+          statusDetail.textContent = '「ならす」をおすと ずっと音がくりかえすよ';
           progressBar.style.strokeDashoffset = CIRCUMFERENCE;
           reRecordButton.classList.remove('hidden');
-          pitchResetBtn.classList.remove('hidden');
           break;
 
         case 'PLAYING':
-          vinylRecord.classList.add('rotating');
-          mixerPanel.classList.add('playing');
+          stage.classList.add('playing');
           mainButton.classList.add('btn-playing');
           buttonIcon.innerHTML = ICONS.pause;
-          buttonLabel.textContent = 'PAUSE';
-          statusDot.classList.add('active-play');
-          badgeLabel.textContent = 'LOOP ON AIR';
-          statusText.textContent = 'DJ ループ再生中';
-          statusDetail.textContent = 'SPEEDフェーダーで音の速さをかえてみよう';
+          buttonLabel.textContent = 'とめる';
+          buttonSubLabel.textContent = 'タップでストップ';
+          statusText.textContent = 'おとが なっているよ';
+          statusDetail.textContent = 'みんなの音といっしょに きいてみよう';
           reRecordButton.classList.remove('hidden');
-          pitchResetBtn.classList.remove('hidden');
           break;
       }
     }
